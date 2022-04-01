@@ -12,7 +12,11 @@ import Animated, {
 } from "react-native-reanimated";
 import { snapPoint } from "react-native-redash";
 
-const PlayableCircle = (props: ComponentProps<typeof Circle>) => {
+type PlayableCircleProps = ComponentProps<typeof Circle> & {
+  parentContainerDimensions: { width: number; height: number };
+};
+
+const PlayableCircle = (props: PlayableCircleProps) => {
   const x = useSharedValue(0);
   const y = useSharedValue(0);
 
@@ -29,10 +33,16 @@ const PlayableCircle = (props: ComponentProps<typeof Circle>) => {
       y.value = ctx.y + translationY;
     },
     onEnd: ({ velocityX, velocityY }) => {
-      const dest = snapPoint(x.value, velocityX, [-100, 0, 100]);
+      const snapWidth = props.parentContainerDimensions.width / 2;
 
-      x.value = withSpring(dest, { velocity: velocityX });
-      y.value = withSpring(10, { velocity: velocityY });
+      const destination = snapPoint(x.value, velocityX, [
+        -snapWidth,
+        0,
+        snapWidth,
+      ]);
+
+      x.value = withSpring(destination, { velocity: velocityX });
+      y.value = withSpring(0, { velocity: velocityY });
     },
   });
 
@@ -41,7 +51,7 @@ const PlayableCircle = (props: ComponentProps<typeof Circle>) => {
   }));
 
   return (
-    <PanGestureHandler onGestureEvent={onGestureEvent}>
+    <PanGestureHandler onGestureEvent={onGestureEvent} minDist={0}>
       <Animated.View style={[style]}>
         <Circle size={100} {...props} />
       </Animated.View>
